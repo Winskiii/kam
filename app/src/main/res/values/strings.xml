@@ -37,7 +37,7 @@
     <string name="text_processing_image">Memproses gambar...</string>
     <string name="toast_failed_get_image_from_camera">Gagal mendapatkan gambar dari kamera</string>
     <string name="toast_failed_get_image_data_from_camera">Gagal mendapatkan data gambar dari kamera</string>
-    <string name="text_detection_result_format">Class: %1$s, Confidence: %.0f%%</string> <!-- Format Confidence diubah menjadi %.0f%% -->
+    <string name="text_detection_result_format">Class: %1$s, Confidence: %.0f%%</string>
     <string name="text_no_damage_detected">Tidak ada kerusakan terdeteksi.</string>
     <string name="text_failed_parse_detection_result">Gagal memparsing hasil deteksi.</string>
     <string name="text_failed_send_image_to_roboflow">Gagal mengirim gambar ke Roboflow. Cek log.</string>
@@ -50,6 +50,18 @@
     <string name="camera_permission_needed_for_feature">Izin kamera dibutuhkan untuk fitur ini</string>
     <string name="placeholder_detection_results">Hasil deteksi akan muncul di sini.</string>
 
+    <!-- String untuk Confidence Slider -->
+    <string name="label_confidence_threshold">Confidence Threshold:</string>
+    <string name="text_confidence_percentage">%1$d%%</string>
+
+    <!-- String BARU untuk pilihan sumber gambar -->
+    <string name="dialog_title_select_image_source">Pilih Sumber Gambar</string>
+    <string name="option_camera">Kamera</string>
+    <string name="option_gallery">Galeri</string>
+    <string name="toast_gallery_permission_denied">Izin galeri ditolak</string>
+    <string name="toast_failed_load_image_from_gallery">Gagal memuat gambar dari galeri</string>
+    <string name="storage_permission_needed_for_gallery">Izin penyimpanan dibutuhkan untuk mengakses galeri</string>
+
     <!-- String yang sudah ada di file Anda, bisa dipertahankan jika masih digunakan -->
     <string name="action_settings">Settings</string>
     <string name="first_fragment_label">First Fragment</string>
@@ -57,9 +69,6 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
-    <!-- String BARU untuk Confidence Slider -->
-    <string name="label_confidence_threshold">Confidence Threshold:</string>
-    <string name="text_confidence_percentage">%1$d%%</string> <!-- Untuk menampilkan nilai slider -->
 
     <string name="lorem_ipsum">
         Cras bibendum enim a justo luctus

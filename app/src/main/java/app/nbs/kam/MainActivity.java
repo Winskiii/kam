@@ -2,9 +2,13 @@ package app.nbs.kam; // Pastikan package name ini sesuai dengan proyek Anda
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.ImageDecoder; // Untuk API 28+
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -13,12 +17,13 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.SeekBar; // Import SeekBar
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -35,9 +40,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList; // Untuk menyimpan prediksi
-import java.util.List;    // Untuk menyimpan prediksi
-import java.util.Locale;  // Untuk formatting string
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -55,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     // UI Elements - Confidence Slider
     private SeekBar seekbarConfidence;
     private TextView textConfidenceSliderValue;
-    private int currentConfidenceThreshold = 70; // Default confidence threshold
+    private int currentConfidenceThreshold = 70;
 
     // UI Elements - Roboflow
     private ImageView roboflowImageViewNewUi;
@@ -72,11 +79,11 @@ public class MainActivity extends AppCompatActivity {
 
     // Activity Result Launchers
     private ActivityResultLauncher<Intent> cameraActivityResultLauncher;
-    private ActivityResultLauncher<String> requestPermissionLauncher;
+    private ActivityResultLauncher<String> requestCameraPermissionLauncher;
+    private ActivityResultLauncher<String> requestGalleryPermissionLauncher; // Untuk izin galeri
+    private ActivityResultLauncher<Intent> galleryActivityResultLauncher;  // Untuk memilih dari galeri
 
-    // Menyimpan semua prediksi dari Roboflow sebelum difilter
     private JSONArray allPredictions = new JSONArray();
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,12 +109,10 @@ public class MainActivity extends AppCompatActivity {
         textDamageValue = findViewById(R.id.text_damage_value);
         textConfidenceValue = findViewById(R.id.text_confidence_value);
 
-        // Confidence Slider
         seekbarConfidence = findViewById(R.id.seekbar_confidence);
         textConfidenceSliderValue = findViewById(R.id.text_confidence_slider_value);
-        seekbarConfidence.setProgress(currentConfidenceThreshold); // Set nilai awal
-        textConfidenceSliderValue.setText(String.format(Locale.getDefault(),getString(R.string.text_confidence_percentage), currentConfidenceThreshold));
-
+        seekbarConfidence.setProgress(currentConfidenceThreshold);
+        textConfidenceSliderValue.setText(String.format(Locale.getDefault(), getString(R.string.text_confidence_percentage), currentConfidenceThreshold));
 
         roboflowImageViewNewUi = findViewById(R.id.roboflow_image_view_new_ui);
         roboflowResultTextNewUi = findViewById(R.id.roboflow_result_text_new_ui);
@@ -116,7 +121,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupActivityResultLaunchers() {
-        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+        // Launcher untuk Izin Kamera
+        requestCameraPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
             if (isGranted) {
                 openCamera();
             } else {
@@ -124,25 +130,62 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Launcher untuk Hasil Kamera
         cameraActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                 Bundle extras = result.getData().getExtras();
                 if (extras != null) {
-                    currentPhoto = (Bitmap) extras.get("data");
-                    if (currentPhoto != null) {
-                        roboflowImageViewNewUi.setImageBitmap(currentPhoto);
-                        roboflowImageViewNewUi.setVisibility(View.VISIBLE);
-                        roboflowResultTextNewUi.setText(getString(R.string.text_processing_image));
-                        roboflowResultTextNewUi.setVisibility(View.VISIBLE);
-                        sendToRoboflow(currentPhoto);
-                    } else {
-                        Toast.makeText(this, getString(R.string.toast_failed_get_image_from_camera), Toast.LENGTH_SHORT).show();
-                    }
+                    processBitmap((Bitmap) extras.get("data"));
                 } else {
                     Toast.makeText(this, getString(R.string.toast_failed_get_image_data_from_camera), Toast.LENGTH_SHORT).show();
                 }
             }
         });
+
+        // Launcher untuk Izin Galeri
+        requestGalleryPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+            if (isGranted) {
+                openGallery();
+            } else {
+                Toast.makeText(this, getString(R.string.toast_gallery_permission_denied), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Launcher untuk Hasil Galeri
+        galleryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                Uri imageUri = result.getData().getData();
+                if (imageUri != null) {
+                    try {
+                        Bitmap bitmap;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(), imageUri);
+                            bitmap = ImageDecoder.decodeBitmap(source);
+                        } else {
+                            // Metode deprecated untuk API < 28
+                            bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+                        }
+                        processBitmap(bitmap);
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error loading image from gallery", e);
+                        Toast.makeText(this, getString(R.string.toast_failed_load_image_from_gallery), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
+    }
+
+    private void processBitmap(Bitmap bitmap) {
+        if (bitmap != null) {
+            currentPhoto = bitmap;
+            roboflowImageViewNewUi.setImageBitmap(currentPhoto);
+            roboflowImageViewNewUi.setVisibility(View.VISIBLE);
+            roboflowResultTextNewUi.setText(getString(R.string.text_processing_image));
+            roboflowResultTextNewUi.setVisibility(View.VISIBLE);
+            sendToRoboflow(currentPhoto);
+        } else {
+            Toast.makeText(this, getString(R.string.toast_failed_get_image_from_camera), Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setupListeners() {
@@ -160,8 +203,7 @@ public class MainActivity extends AppCompatActivity {
                 showDevicesContent();
                 return true;
             } else if (itemId == R.id.navigation_camera) {
-                showCameraContent();
-                checkCameraPermissionAndOpenCamera();
+                showImageSourceDialog(); // Tampilkan dialog pilihan sumber
                 return true;
             } else if (itemId == R.id.navigation_history) {
                 showHistoryContent();
@@ -173,53 +215,65 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        // Listener untuk SeekBar Confidence
         seekbarConfidence.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 currentConfidenceThreshold = progress;
                 textConfidenceSliderValue.setText(String.format(Locale.getDefault(), getString(R.string.text_confidence_percentage), currentConfidenceThreshold));
-                // Jika Anda ingin langsung memfilter ulang hasil yang sudah ada saat slider diubah:
-                if (allPredictions.length() > 0) {
+                if (fromUser && allPredictions.length() > 0) {
                     filterAndDisplayPredictions();
                 }
             }
-
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                // Tidak perlu aksi khusus
-            }
-
+            public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                // Tidak perlu aksi khusus, atau bisa memicu pemfilteran di sini jika tidak di onProgressChanged
                 Log.d(TAG, "Confidence threshold set to: " + currentConfidenceThreshold + "%");
             }
         });
     }
 
-    private void showDevicesContent() {
+    private void showImageSourceDialog() {
+        // Panggil showCameraContent dulu untuk menyiapkan UI
+        showCameraContent();
+
+        CharSequence[] options = {getString(R.string.option_camera), getString(R.string.option_gallery)};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getString(R.string.dialog_title_select_image_source));
+        builder.setItems(options, (dialog, item) -> {
+            if (options[item].equals(getString(R.string.option_camera))) {
+                checkCameraPermissionAndOpenCamera();
+            } else if (options[item].equals(getString(R.string.option_gallery))) {
+                checkGalleryPermissionAndOpenGallery();
+            }
+        });
+        builder.show();
+    }
+
+    // Metode untuk menampilkan konten berdasarkan tab yang dipilih (sama seperti sebelumnya)
+    private void showDevicesContent() { /* ... kode sama ... */
         mapContainer.setVisibility(View.VISIBLE);
         detailsPanel.setVisibility(View.VISIBLE);
         roboflowImageViewNewUi.setVisibility(View.GONE);
         roboflowResultTextNewUi.setVisibility(View.GONE);
         Toast.makeText(MainActivity.this, getString(R.string.toast_devices_selected), Toast.LENGTH_SHORT).show();
-        // Di sini Anda bisa menampilkan data terakhir yang valid (jika ada) atau membersihkan detail
-        filterAndDisplayPredictions(); // Tampilkan data terakhir dengan threshold saat ini
+        filterAndDisplayPredictions();
     }
 
-    private void showCameraContent() {
+    private void showCameraContent() { /* ... kode sama ... */
         mapContainer.setVisibility(View.GONE);
-        detailsPanel.setVisibility(View.VISIBLE); // Panel detail digunakan untuk hasil kamera
-        roboflowImageViewNewUi.setVisibility(View.VISIBLE);
-        roboflowResultTextNewUi.setVisibility(View.VISIBLE);
-        roboflowResultTextNewUi.setText(getString(R.string.placeholder_detection_results)); // Reset teks hasil
-        clearDamageDetails(); // Bersihkan detail untuk tangkapan baru
-        allPredictions = new JSONArray(); // Reset prediksi sebelumnya
-        Toast.makeText(MainActivity.this, getString(R.string.toast_camera_selected), Toast.LENGTH_SHORT).show();
+        detailsPanel.setVisibility(View.VISIBLE);
+        roboflowImageViewNewUi.setVisibility(View.VISIBLE); // Siapkan untuk gambar
+        roboflowResultTextNewUi.setVisibility(View.VISIBLE); // Siapkan untuk teks hasil
+        roboflowResultTextNewUi.setText(getString(R.string.placeholder_detection_results));
+        // Kosongkan gambar sebelumnya saat tab kamera dipilih ulang sebelum sumber dipilih
+        roboflowImageViewNewUi.setImageDrawable(null);
+        clearDamageDetails();
+        allPredictions = new JSONArray();
+        // Jangan panggil Toast di sini, akan dipanggil setelah sumber gambar dipilih
     }
 
-    private void showHistoryContent() {
+    private void showHistoryContent() { /* ... kode sama ... */
         mapContainer.setVisibility(View.GONE);
         detailsPanel.setVisibility(View.GONE);
         roboflowImageViewNewUi.setVisibility(View.GONE);
@@ -227,7 +281,7 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(MainActivity.this, getString(R.string.toast_history_selected), Toast.LENGTH_SHORT).show();
     }
 
-    private void showProfileContent() {
+    private void showProfileContent() { /* ... kode sama ... */
         mapContainer.setVisibility(View.GONE);
         detailsPanel.setVisibility(View.GONE);
         roboflowImageViewNewUi.setVisibility(View.GONE);
@@ -235,15 +289,15 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(MainActivity.this, getString(R.string.toast_profile_selected), Toast.LENGTH_SHORT).show();
     }
 
-
+    // Logika Kamera (sudah ada, hanya nama launcher izin yang disesuaikan)
     private void checkCameraPermissionAndOpenCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             openCamera();
         } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
             Toast.makeText(this, getString(R.string.camera_permission_needed_for_feature), Toast.LENGTH_LONG).show();
-            requestPermissionLauncher.launch(Manifest.permission.CAMERA);
+            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
         } else {
-            requestPermissionLauncher.launch(Manifest.permission.CAMERA);
+            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
         }
     }
 
@@ -256,24 +310,45 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void sendToRoboflow(Bitmap bitmap) {
+    // Logika Galeri BARU
+    private void checkGalleryPermissionAndOpenGallery() {
+        String permission;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // Android 13+
+            permission = Manifest.permission.READ_MEDIA_IMAGES;
+        } else { // Android 12 dan di bawahnya
+            permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+            openGallery();
+        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+            Toast.makeText(this, getString(R.string.storage_permission_needed_for_gallery), Toast.LENGTH_LONG).show();
+            requestGalleryPermissionLauncher.launch(permission);
+        } else {
+            requestGalleryPermissionLauncher.launch(permission);
+        }
+    }
+
+    private void openGallery() {
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        // Alternatif: Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT); galleryIntent.setType("image/*");
+        try {
+            galleryActivityResultLauncher.launch(galleryIntent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Tidak ada aplikasi galeri ditemukan.", Toast.LENGTH_SHORT).show(); // Sebaiknya string resource
+        }
+    }
+
+
+    private void sendToRoboflow(Bitmap bitmap) { // ... kode sama seperti sebelumnya ...
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos);
         byte[] imageBytes = baos.toByteArray();
         String encodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-
-        // Anda BISA menambahkan parameter &confidence={threshold_persen} jika API Roboflow mendukungnya
-        // Misalnya: float confidenceParam = currentConfidenceThreshold / 100.0f;
-        // String inferenceApiUrl = ROBOFLOW_API_URL_PREFIX + ROBOFLOW_MODEL_ENDPOINT +
-        //                          "?api_key=" + ROBOFLOW_API_KEY + "&confidence=" + currentConfidenceThreshold;
-        // Namun, lebih umum memfilter di sisi klien.
         String inferenceApiUrl = ROBOFLOW_API_URL_PREFIX + ROBOFLOW_MODEL_ENDPOINT + "?api_key=" + ROBOFLOW_API_KEY;
-
         Log.d(TAG, "Sending image to: " + inferenceApiUrl);
-        roboflowResultTextNewUi.setText(getString(R.string.text_processing_image)); // Update status
-
+        roboflowResultTextNewUi.setText(getString(R.string.text_processing_image));
         RequestQueue queue = Volley.newRequestQueue(this);
-
         StringRequest stringRequest = new StringRequest(Request.Method.POST, inferenceApiUrl,
                 response -> {
                     try {
@@ -281,10 +356,9 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject jsonResponse = new JSONObject(response);
                         allPredictions = jsonResponse.optJSONArray("predictions");
                         if (allPredictions == null) {
-                            allPredictions = new JSONArray(); // Pastikan tidak null
+                            allPredictions = new JSONArray();
                         }
-                        filterAndDisplayPredictions(); // Filter dan tampilkan
-
+                        filterAndDisplayPredictions();
                     } catch (JSONException e) {
                         Log.e(TAG, "Roboflow JSON Parsing error: " + e.getMessage(), e);
                         roboflowResultTextNewUi.setText(getString(R.string.text_failed_parse_detection_result));
@@ -292,7 +366,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 },
                 error -> {
-                    // ... (Error handling sama seperti sebelumnya) ...
                     String errorMessage = getString(R.string.text_failed_send_image_to_roboflow);
                     if (error.networkResponse != null) {
                         errorMessage += "\nStatus Code: " + error.networkResponse.statusCode;
@@ -317,25 +390,22 @@ public class MainActivity extends AppCompatActivity {
         queue.add(stringRequest);
     }
 
-    private void filterAndDisplayPredictions() {
+    private void filterAndDisplayPredictions() { // ... kode sama seperti sebelumnya ...
         if (allPredictions.length() == 0) {
             roboflowResultTextNewUi.setText(getString(R.string.text_no_damage_detected));
             clearDamageDetails();
             return;
         }
-
         List<JSONObject> filteredPredictions = new ArrayList<>();
         double maxConfidence = 0;
         JSONObject bestPrediction = null;
-
         try {
             for (int i = 0; i < allPredictions.length(); i++) {
                 JSONObject prediction = allPredictions.getJSONObject(i);
-                double confidence = prediction.optDouble("confidence", 0.0) * 100; // Ubah ke persentase
-
+                double confidence = prediction.optDouble("confidence", 0.0) * 100;
                 if (confidence >= currentConfidenceThreshold) {
                     filteredPredictions.add(prediction);
-                    if (confidence > maxConfidence) { // Cari prediksi dengan confidence tertinggi
+                    if (confidence > maxConfidence) {
                         maxConfidence = confidence;
                         bestPrediction = prediction;
                     }
@@ -350,19 +420,12 @@ public class MainActivity extends AppCompatActivity {
 
         if (bestPrediction != null) {
             String className = bestPrediction.optString("class", "N/A");
-            // Pastikan kelas yang dideteksi adalah salah satu dari yang diharapkan
-            if (className.equalsIgnoreCase("Minimum damage") ||
-                    className.equalsIgnoreCase("moderate damage") || // Perhatikan case sensitivity
-                    className.equalsIgnoreCase("major damage")) {
-                textDamageValue.setText(className);
-            } else {
-                textDamageValue.setText(className); // Tampilkan apa adanya jika bukan salah satu dari 3 itu
-                Log.w(TAG, "Detected class not one of expected: " + className);
-            }
+            // Anda mungkin ingin normalisasi nama kelas di sini jika perlu
+            // String normalizedClassName = className.toLowerCase().replace("_", " ");
+            // if (normalizedClassName.equals("minimum damage") || ... )
+            textDamageValue.setText(className); // Tampilkan kelas dari Roboflow apa adanya
             textConfidenceValue.setText(String.format(Locale.getDefault(), "%.0f%%", maxConfidence));
-            textRoadNameValue.setText("Dari Kamera"); // Atau dari GPS nanti
-
-            // Tampilkan semua prediksi yang difilter di roboflowResultTextNewUi
+            textRoadNameValue.setText("Dari Gambar"); // Placeholder, bisa diupdate jika ada info lokasi
             StringBuilder resultBuilder = new StringBuilder();
             for(JSONObject pred : filteredPredictions){
                 String predClass = pred.optString("class", "N/A");
@@ -371,7 +434,6 @@ public class MainActivity extends AppCompatActivity {
                 resultBuilder.append("\n");
             }
             roboflowResultTextNewUi.setText(resultBuilder.toString().trim());
-
         } else {
             roboflowResultTextNewUi.setText(getString(R.string.text_no_damage_detected) + " (di atas " + currentConfidenceThreshold + "%)");
             clearDamageDetails();
@@ -379,8 +441,7 @@ public class MainActivity extends AppCompatActivity {
         roboflowResultTextNewUi.setVisibility(View.VISIBLE);
     }
 
-
-    private void clearDamageDetails() {
+    private void clearDamageDetails() { // ... kode sama seperti sebelumnya ...
         textRoadNameValue.setText(getString(R.string.placeholder_empty));
         textDamageValue.setText(getString(R.string.placeholder_empty));
         textConfidenceValue.setText(getString(R.string.placeholder_empty));
