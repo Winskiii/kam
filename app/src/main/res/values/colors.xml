@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Warna dasar yang sudah Anda miliki -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Warna tema aplikasi (Contoh, Anda bisa sesuaikan) -->
+    <color name="colorPrimary">#6200EE</color> <!-- Contoh: Ungu -->
+    <color name="colorPrimaryDark">#3700B3</color> <!-- Contoh: Ungu Tua -->
+    <color name="colorAccent">#03DAC5</color> <!-- Contoh: Teal -->
+
+    <!-- Warna spesifik untuk UI Peta Baru -->
+    <color name="orange_text">#FFA500</color> <!-- Oranye untuk teks tombol Help/Sign Out dan ikon aktif bottom nav -->
+    <color name="grey_dark">#888888</color>   <!-- Abu-abu tua untuk teks subtitle atau teks sekunder -->
+    <color name="grey_medium">#E0E0E0</color> <!-- Abu-abu sedang untuk background placeholder peta -->
+    <color name="grey_light">#F0F0F0</color>  <!-- Abu-abu muda untuk background hasil Roboflow -->
+    <color name="text_dark">#333333</color>   <!-- Hitam lembut untuk teks utama -->
+    <color name="green_indicator">#4CAF50</color> <!-- Hijau untuk indikator "Minimum damage" -->
+
+    <!-- Warna yang mungkin dirujuk dari UI sebelumnya jika masih ada (opsional) -->
+    <color name="red_error">#D32F2F</color> <!-- Merah untuk pesan error atau jumlah transaksi negatif -->
+    <color name="card_gradient_purple_start">#AA00FF</color>
+    <color name="card_gradient_purple_center">#6200EA</color>
+    <color name="card_gradient_purple_end">#3700B3</color>
+    <color name="card_gradient_gray_start">#E0E0E0</color>
+    <color name="card_gradient_gray_end">#BDBDBD</color>
+    <color name="circle_yellow_bg">#FFEB3B</color>
+    <color name="circle_purple_bg">#9C27B0</color>
+    <color name="circle_blue_bg">#2196F3</color>
+
+</resources>

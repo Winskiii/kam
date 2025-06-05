@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Roady</string>
+
+    <!-- String untuk UI Baru -->
+    <string name="toolbar_help">Help</string>
+    <string name="toolbar_title_roady">Roady</string>
+    <string name="toolbar_subtitle_road_damage">Road damage detection</string>
+    <string name="toolbar_sign_out">Sign Out</string>
+
+    <string name="desc_map_placeholder">Placeholder untuk Peta Lokasi Kerusakan</string>
+    <string name="desc_map_pin">Pin Lokasi Kerusakan</string>
+    <string name="info_minimum_damage">Minimum damage</string>
+
+    <string name="label_road_name">Road name:</string>
+    <string name="label_damage">Damage:</string>
+    <string name="label_confidence">Confidence:</string>
+    <string name="placeholder_empty">-</string>
+
+    <!-- Bottom Navigation Menu Items -->
+    <string name="bottom_nav_devices">Devices</string>
+    <string name="bottom_nav_camera">Camera</string>
+    <string name="bottom_nav_history">History</string>
+    <string name="bottom_nav_profile">Profile</string>
+
+    <!-- Deskripsi Konten (Accessibility) -->
+    <string name="desc_back_button">Tombol Kembali</string>
+    <string name="desc_captured_image_roboflow">Gambar yang ditangkap untuk deteksi kerusakan</string>
+    <string name="desc_placeholder_map_image">Gambar Placeholder Peta</string>
+    <string name="desc_map_pin_image">Ikon Pin Peta</string>
+    <string name="desc_green_indicator_dot">Indikator Titik Hijau</string>
+
+    <!-- String untuk Toast dan pesan di MainActivity.java -->
+    <string name="toast_back_button_clicked">Tombol Kembali Diklik</string>
+    <string name="toast_no_camera_app">Tidak ada aplikasi kamera ditemukan</string>
+    <string name="toast_camera_permission_denied">Izin kamera ditolak</string>
+    <string name="text_processing_image">Memproses gambar...</string>
+    <string name="toast_failed_get_image_from_camera">Gagal mendapatkan gambar dari kamera</string>
+    <string name="toast_failed_get_image_data_from_camera">Gagal mendapatkan data gambar dari kamera</string>
+    <string name="text_detection_result_format">Class: %1$s, Confidence: %.0f%%</string> <!-- Format Confidence diubah menjadi %.0f%% -->
+    <string name="text_no_damage_detected">Tidak ada kerusakan terdeteksi.</string>
+    <string name="text_failed_parse_detection_result">Gagal memparsing hasil deteksi.</string>
+    <string name="text_failed_send_image_to_roboflow">Gagal mengirim gambar ke Roboflow. Cek log.</string>
+    <string name="toast_help_clicked">Tombol Help Diklik</string>
+    <string name="toast_sign_out_clicked">Tombol Sign Out Diklik</string>
+    <string name="toast_devices_selected">Tab Devices Dipilih</string>
+    <string name="toast_camera_selected">Tab Camera Dipilih</string>
+    <string name="toast_history_selected">Tab History Dipilih</string>
+    <string name="toast_profile_selected">Tab Profile Dipilih</string>
+    <string name="camera_permission_needed_for_feature">Izin kamera dibutuhkan untuk fitur ini</string>
+    <string name="placeholder_detection_results">Hasil deteksi akan muncul di sini.</string>
+
+    <!-- String yang sudah ada di file Anda, bisa dipertahankan jika masih digunakan -->
+    <string name="action_settings">Settings</string>
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <!-- String BARU untuk Confidence Slider -->
+    <string name="label_confidence_threshold">Confidence Threshold:</string>
+    <string name="text_confidence_percentage">%1$d%%</string> <!-- Untuk menampilkan nilai slider -->
+
+    <string name="lorem_ipsum">
+        Cras bibendum enim a justo luctus
+        vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
+    </string>
+</resources>

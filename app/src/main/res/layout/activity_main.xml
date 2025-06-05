@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    tools:context=".MainActivity">
+
+    <!-- Toolbar Atas -->
+    <RelativeLayout
+        android:id="@+id/top_toolbar_new"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        android:elevation="4dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:id="@+id/toolbar_help_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:text="@string/toolbar_help"
+            android:textColor="@color/orange_text"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <TextView
+                android:id="@+id/toolbar_title_roady"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/toolbar_title_roady"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/toolbar_subtitle_roady"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/toolbar_subtitle_road_damage"
+                android:textColor="@color/grey_dark"
+                android:textSize="12sp"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/toolbar_sign_out_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="@string/toolbar_sign_out"
+            android:textColor="@color/orange_text"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+    </RelativeLayout>
+
+    <!-- Konten Utama di bawah Toolbar -->
+    <LinearLayout
+        android:id="@+id/main_content_area"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/top_toolbar_new"
+        android:layout_above="@+id/bottom_navigation_view"
+        android:orientation="vertical">
+
+        <!-- Placeholder untuk Peta -->
+        <!-- Komentar yang salah tempat sebelumnya telah diperbaiki atau dipindahkan -->
+        <FrameLayout
+            android:id="@+id/map_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.5"
+            android:background="@color/grey_medium">
+            <!-- Komentar sekarang di dalam konten, bukan di atribut -->
+            <!-- Mengurangi sedikit weight untuk memberi ruang slider -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/grey_light"
+                android:scaleType="centerCrop"
+                android:contentDescription="@string/desc_map_placeholder" />
+            <ImageView
+                android:id="@+id/map_pin_damage"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="#FFA500" /><!-- Placeholder pin oranye -->
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/map_info_window"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                android:layout_gravity="center_horizontal|top"
+                android:layout_marginTop="160dp"
+                android:layout_marginStart="60dp"
+                app:cardBackgroundColor="@color/white">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:gravity="center_vertical">
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:background="@drawable/circle_green_indicator"
+                        android:layout_marginEnd="8dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/info_minimum_damage"
+                        android:textColor="@color/text_dark"
+                        android:textSize="14sp"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </FrameLayout>
+
+        <!-- Panel Detail di Bawah Peta -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.5"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:id="@+id/details_panel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@color/white">
+
+                <ImageView
+                    android:id="@+id/details_back_button"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:contentDescription="@string/desc_back_button"
+                    android:layout_marginBottom="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="@color/text_dark"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_road_name"
+                        android:textColor="@color/text_dark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:id="@+id/text_road_name_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/placeholder_empty"
+                        android:textColor="@color/grey_dark"
+                        android:textSize="16sp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_damage"
+                        android:textColor="@color/text_dark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:id="@+id/text_damage_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/placeholder_empty"
+                        android:textColor="@color/grey_dark"
+                        android:textSize="16sp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_confidence"
+                        android:textColor="@color/text_dark"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:id="@+id/text_confidence_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/placeholder_empty"
+                        android:textColor="@color/grey_dark"
+                        android:textSize="16sp"/>
+                </LinearLayout>
+
+                <!-- Confidence Threshold Slider -->
+                <TextView
+                    android:id="@+id/label_confidence_slider"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_confidence_threshold"
+                    android:textColor="@color/text_dark"
+                    android:textSize="14sp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0%"
+                        android:textColor="@color/grey_dark"
+                        android:textSize="12sp"/>
+
+                    <SeekBar
+                        android:id="@+id/seekbar_confidence"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:max="100"
+                        android:progress="70"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"/>
+
+                    <TextView
+                        android:id="@+id/text_confidence_slider_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/text_confidence_percentage"
+                        tools:text="70%"
+                        android:textColor="@color/orange_text"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+
+
+                <!-- Area untuk ImageView dan TextView Roboflow -->
+                <ImageView
+                    android:id="@+id/roboflow_image_view_new_ui"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_marginTop="8dp"
+                    android:scaleType="centerInside"
+                    android:adjustViewBounds="true"
+                    android:background="@color/grey_light"
+                    android:visibility="gone"
+                    android:contentDescription="@string/desc_captured_image_roboflow" />
+
+                <TextView
+                    android:id="@+id/roboflow_result_text_new_ui"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:padding="8dp"
+                    android:background="@color/grey_light"
+                    android:textColor="@color/text_dark"
+                    android:textSize="12sp"
+                    android:textIsSelectable="true"
+                    android:visibility="gone"
+                    android:maxLines="3"
+                    android:ellipsize="end"
+                    android:text="@string/placeholder_detection_results"/>
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/white"
+        app:itemIconTint="@drawable/bottom_nav_icon_color_selector"
+        app:itemTextColor="@drawable/bottom_nav_icon_color_selector"
+        app:labelVisibilityMode="labeled"
+        app:elevation="8dp"
+        app:menu="@menu/bottom_navigation_menu" />
+
+</RelativeLayout>
