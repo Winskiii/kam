@@ -36,7 +36,11 @@ android {
 
 dependencies {
     implementation(libs.volley)
+    annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
 
+    // Google Maps dan Lokasi
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.2.0")
     // Tambahan untuk image loading (opsional)
     implementation(libs.glide)
     annotationProcessor(libs.compiler)

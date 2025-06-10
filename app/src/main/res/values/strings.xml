@@ -61,6 +61,10 @@
     <string name="toast_gallery_permission_denied">Izin galeri ditolak</string>
     <string name="toast_failed_load_image_from_gallery">Gagal memuat gambar dari galeri</string>
     <string name="storage_permission_needed_for_gallery">Izin penyimpanan dibutuhkan untuk mengakses galeri</string>
+    <string name="hint_search_road_name">Cari nama jalan...</string>
+    <string name="desc_search_button">Tombol Cari</string>
+    <string name="toast_address_not_found">Alamat tidak ditemukan</string>
+    <string name="location_permission_needed">Izin lokasi dibutuhkan untuk menampilkan peta</string>
 
     <!-- String yang sudah ada di file Anda, bisa dipertahankan jika masih digunakan -->
     <string name="action_settings">Settings</string>

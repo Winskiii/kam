@@ -7,7 +7,7 @@
     android:background="#FFFFFF"
     tools:context=".MainActivity">
 
-    <!-- Toolbar Atas -->
+    <!-- Toolbar Atas (Sama seperti sebelumnya) -->
     <RelativeLayout
         android:id="@+id/top_toolbar_new"
         android:layout_width="match_parent"
@@ -16,7 +16,7 @@
         android:elevation="4dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp">
-
+        <!-- Konten Toolbar di sini... (tidak berubah) -->
         <TextView
             android:id="@+id/toolbar_help_button"
             android:layout_width="wrap_content"
@@ -29,14 +29,12 @@
             android:textStyle="bold"
             android:padding="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"/>
-
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:orientation="vertical"
             android:gravity="center_horizontal">
-
             <TextView
                 android:id="@+id/toolbar_title_roady"
                 android:layout_width="wrap_content"
@@ -53,7 +51,6 @@
                 android:textColor="@color/grey_dark"
                 android:textSize="12sp"/>
         </LinearLayout>
-
         <TextView
             android:id="@+id/toolbar_sign_out_button"
             android:layout_width="wrap_content"
@@ -77,69 +74,72 @@
         android:layout_above="@+id/bottom_navigation_view"
         android:orientation="vertical">
 
-        <!-- Placeholder untuk Peta -->
-        <!-- Komentar yang salah tempat sebelumnya telah diperbaiki atau dipindahkan -->
+        <!-- Kontainer Peta dan Pencarian -->
         <FrameLayout
-            android:id="@+id/map_container"
+            android:id="@+id/map_frame_container"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.5"
-            android:background="@color/grey_medium">
-            <!-- Komentar sekarang di dalam konten, bukan di atribut -->
-            <!-- Mengurangi sedikit weight untuk memberi ruang slider -->
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/grey_light"
-                android:scaleType="centerCrop"
-                android:contentDescription="@string/desc_map_placeholder" />
-            <ImageView
-                android:id="@+id/map_pin_damage"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="#FFA500" /><!-- Placeholder pin oranye -->
+            android:layout_weight="0.5">
 
+            <!-- Mengganti ImageView dengan Fragment untuk Google Maps -->
+            <fragment
+                android:id="@+id/map_fragment"
+                android:name="com.google.android.gms.maps.SupportMapFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- CardView untuk Bar Pencarian di atas Peta -->
             <androidx.cardview.widget.CardView
-                android:id="@+id/map_info_window"
-                android:layout_width="wrap_content"
+                android:id="@+id/search_card"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                android:layout_gravity="center_horizontal|top"
-                android:layout_marginTop="160dp"
-                android:layout_marginStart="60dp"
-                app:cardBackgroundColor="@color/white">
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp">
+
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="8dp"
-                    android:gravity="center_vertical">
-                    <View
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:background="@drawable/circle_green_indicator"
-                        android:layout_marginEnd="8dp"/>
-                    <TextView
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/edit_text_search"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:hint="@string/hint_search_road_name"
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:maxLines="1"
+                        android:padding="12dp"
+                        android:textSize="16sp" />
+
+                    <ImageButton
+                        android:id="@+id/button_search"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/info_minimum_damage"
-                        android:textColor="@color/text_dark"
-                        android:textSize="14sp"/>
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/desc_search_button"
+                        android:padding="10dp"
+                        android:src="@android:drawable/ic_menu_search"
+                        app:tint="@color/grey_dark" />
+                    <!-- Menggunakan ikon search standar Android -->
+
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </FrameLayout>
 
-        <!-- Panel Detail di Bawah Peta -->
+        <!-- Panel Detail (Sama seperti sebelumnya) -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.5"
             android:fillViewport="true">
-
+            <!-- Konten Panel Detail di sini... (tidak berubah) -->
             <LinearLayout
                 android:id="@+id/details_panel"
                 android:layout_width="match_parent"
@@ -147,7 +147,7 @@
                 android:orientation="vertical"
                 android:padding="16dp"
                 android:background="@color/white">
-
+                <!-- ...konten detail panel sama seperti artifact android_ui_layout_v5_map_style_confidence_fixed_v2... -->
                 <ImageView
                     android:id="@+id/details_back_button"
                     android:layout_width="30dp"
@@ -156,7 +156,6 @@
                     android:layout_marginBottom="12dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     app:tint="@color/text_dark"/>
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -177,7 +176,6 @@
                         android:textColor="@color/grey_dark"
                         android:textSize="16sp"/>
                 </LinearLayout>
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -198,7 +196,6 @@
                         android:textColor="@color/grey_dark"
                         android:textSize="16sp"/>
                 </LinearLayout>
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -219,8 +216,6 @@
                         android:textColor="@color/grey_dark"
                         android:textSize="16sp"/>
                 </LinearLayout>
-
-                <!-- Confidence Threshold Slider -->
                 <TextView
                     android:id="@+id/label_confidence_slider"
                     android:layout_width="wrap_content"
@@ -228,7 +223,6 @@
                     android:text="@string/label_confidence_threshold"
                     android:textColor="@color/text_dark"
                     android:textSize="14sp"/>
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -236,14 +230,12 @@
                     android:gravity="center_vertical"
                     android:layout_marginTop="4dp"
                     android:layout_marginBottom="12dp">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0%"
                         android:textColor="@color/grey_dark"
                         android:textSize="12sp"/>
-
                     <SeekBar
                         android:id="@+id/seekbar_confidence"
                         android:layout_width="0dp"
@@ -253,7 +245,6 @@
                         android:progress="70"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="8dp"/>
-
                     <TextView
                         android:id="@+id/text_confidence_slider_value"
                         android:layout_width="wrap_content"
@@ -264,9 +255,6 @@
                         android:textSize="14sp"
                         android:textStyle="bold"/>
                 </LinearLayout>
-
-
-                <!-- Area untuk ImageView dan TextView Roboflow -->
                 <ImageView
                     android:id="@+id/roboflow_image_view_new_ui"
                     android:layout_width="match_parent"
@@ -277,7 +265,6 @@
                     android:background="@color/grey_light"
                     android:visibility="gone"
                     android:contentDescription="@string/desc_captured_image_roboflow" />
-
                 <TextView
                     android:id="@+id/roboflow_result_text_new_ui"
                     android:layout_width="match_parent"
@@ -296,7 +283,7 @@
         </ScrollView>
     </LinearLayout>
 
-    <!-- Bottom Navigation -->
+    <!-- Bottom Navigation (Sama seperti sebelumnya) -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation_view"
         android:layout_width="match_parent"
