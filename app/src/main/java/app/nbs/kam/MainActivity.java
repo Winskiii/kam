@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
     // !!! PERINGATAN KEAMANAN: Jangan pernah menempatkan API key secara langsung di kode aplikasi produksi.
     // !!! Ganti dengan API Key Anda yang valid.
-    private static final String OPENAI_API_KEY = "api";
+    private static final String OPENAI_API_KEY = "sk-proj-aclufF3BV3QMdrGjmphkGpO8Pyl1_0b5CAPIcVIWeGHbCg_uJyvxei2-_lrhyHRtnwNS6k_sVKjLqT3BlbkFJmV-mjdrGWKpDZjF-HBeLB2mXxKi-b2x95AZArJzpZume4jui2hh9kP0nil_2EojkQ4oI4WKtoA";
 
     // Launchers
     private ActivityResultLauncher<Intent> cameraActivityResultLauncher, galleryActivityResultLauncher;
