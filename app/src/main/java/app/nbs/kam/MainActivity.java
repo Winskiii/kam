@@ -22,6 +22,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,12 +32,14 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -55,7 +58,9 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -64,40 +69,44 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private static final String TAG = "MainActivity";
 
-    // Google Maps and Location
+    // UI Elements
     private GoogleMap mMap;
     private FusedLocationProviderClient fusedLocationProviderClient;
-    private final LatLng defaultLocation = new LatLng(-6.2088, 106.8456); // Default: Jakarta
-
-    // UI Elements - Search
+    private final LatLng defaultLocation = new LatLng(-6.2088, 106.8456);
     private EditText editTextSearch;
     private ImageButton buttonSearch;
-
-    // UI Elements
     private TextView toolbarHelpButton, toolbarSignOutButton;
     private ImageView detailsBackButton;
     private TextView textRoadNameValue, textDamageValue, textConfidenceValue;
     private LinearLayout detailsPanel;
     private SeekBar seekbarConfidence;
     private TextView textConfidenceSliderValue;
-    private int currentConfidenceThreshold = 70;
     private ImageView roboflowImageViewNewUi;
     private TextView roboflowResultTextNewUi;
-    private Bitmap currentPhoto;
     private BottomNavigationView bottomNavigationView;
     private View mapFrameContainer;
+    private CardView chatbotCard;
+    private ProgressBar chatbotProgressBar;
+    private TextView textChatbotResponse;
 
-    // Roboflow API
-    private static final String ROBOFLOW_API_URL_PREFIX = "https://detect.roboflow.com/";
-    private static final String ROBOFLOW_MODEL_ENDPOINT = "road-damage-0cqzt/1";
-    private static final String ROBOFLOW_API_KEY = "GzmSCfORrjN5uttBwYNf";
+    // State Variables
+    private int currentConfidenceThreshold = 70;
+    private Bitmap currentPhoto;
+    private JSONArray allPredictions = new JSONArray();
+
+    // Roboflow API - Menggunakan URL lengkap yang Anda berikan
+    private static final String ROBOFLOW_API_URL = "https://detect.roboflow.com/road-damage-fhdff/1?api_key=GzmSCfORrjN5uttBwYNf";
+
+    // OpenAI API
+    private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+    // !!! PERINGATAN KEAMANAN: Jangan pernah menempatkan API key secara langsung di kode aplikasi produksi.
+    // !!! Ganti dengan API Key Anda yang valid.
+    private static final String OPENAI_API_KEY = "sk-proj-aclufF3BV3QMdrGjmphkGpO8Pyl1_0b5CAPIcVIWeGHbCg_uJyvxei2-_lrhyHRtnwNS6k_sVKjLqT3BlbkFJmV-mjdrGWKpDZjF-HBeLB2mXxKi-b2x95AZArJzpZume4jui2hh9kP0nil_2EojkQ4oI4WKtoA";
 
     // Launchers
     private ActivityResultLauncher<Intent> cameraActivityResultLauncher, galleryActivityResultLauncher;
     private ActivityResultLauncher<String> requestCameraPermissionLauncher, requestGalleryPermissionLauncher;
     private ActivityResultLauncher<String[]> requestLocationPermissionLauncher;
-
-    private JSONArray allPredictions = new JSONArray();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,12 +118,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setupListeners();
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map_fragment);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        }
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
+        if (mapFragment != null) mapFragment.getMapAsync(this);
 
         bottomNavigationView.setSelectedItemId(R.id.navigation_devices);
         showDevicesContent();
@@ -145,6 +150,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFrameContainer = findViewById(R.id.map_frame_container);
         editTextSearch = findViewById(R.id.edit_text_search);
         buttonSearch = findViewById(R.id.button_search);
+        chatbotCard = findViewById(R.id.chatbot_card);
+        chatbotProgressBar = findViewById(R.id.chatbot_progress_bar);
+        textChatbotResponse = findViewById(R.id.text_chatbot_response);
 
         seekbarConfidence.setProgress(currentConfidenceThreshold);
         textConfidenceSliderValue.setText(String.format(Locale.getDefault(), getString(R.string.text_confidence_percentage), currentConfidenceThreshold));
@@ -155,7 +163,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (isGranted) openCamera();
             else Toast.makeText(this, getString(R.string.toast_camera_permission_denied), Toast.LENGTH_SHORT).show();
         });
-
         cameraActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                 Bundle extras = result.getData().getExtras();
@@ -163,12 +170,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 else Toast.makeText(this, getString(R.string.toast_failed_get_image_data_from_camera), Toast.LENGTH_SHORT).show();
             }
         });
-
         requestGalleryPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
             if (isGranted) openGallery();
             else Toast.makeText(this, getString(R.string.toast_gallery_permission_denied), Toast.LENGTH_SHORT).show();
         });
-
         galleryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                 Uri imageUri = result.getData().getData();
@@ -178,24 +183,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 ImageDecoder.decodeBitmap(ImageDecoder.createSource(this.getContentResolver(), imageUri)) :
                                 MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
                         processBitmap(bitmap);
-                    } catch (IOException e) {
-                        Log.e(TAG, "Error loading image from gallery", e);
-                        Toast.makeText(this, getString(R.string.toast_failed_load_image_from_gallery), Toast.LENGTH_SHORT).show();
-                    }
+                    } catch (IOException e) { Log.e(TAG, "Error loading image from gallery", e); }
                 }
             }
         });
-
         requestLocationPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestMultiplePermissions(),
                 permissions -> {
                     Boolean fineLocationGranted = permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false);
                     Boolean coarseLocationGranted = permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false);
-                    if (Boolean.TRUE.equals(fineLocationGranted) || Boolean.TRUE.equals(coarseLocationGranted)) {
-                        enableMyLocation();
-                    } else {
-                        Toast.makeText(this, getString(R.string.location_permission_needed), Toast.LENGTH_LONG).show();
-                    }
+                    if (Boolean.TRUE.equals(fineLocationGranted) || Boolean.TRUE.equals(coarseLocationGranted)) enableMyLocation();
+                    else Toast.makeText(this, getString(R.string.location_permission_needed), Toast.LENGTH_LONG).show();
                 }
         );
     }
@@ -261,6 +259,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         detailsPanel.setVisibility(View.VISIBLE);
         roboflowImageViewNewUi.setVisibility(View.GONE);
         roboflowResultTextNewUi.setVisibility(View.GONE);
+        chatbotCard.setVisibility(allPredictions.length() > 0 ? View.VISIBLE : View.GONE);
     }
 
     private void showCameraContent() {
@@ -270,6 +269,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         roboflowResultTextNewUi.setVisibility(View.VISIBLE);
         roboflowResultTextNewUi.setText(getString(R.string.placeholder_detection_results));
         roboflowImageViewNewUi.setImageDrawable(null);
+        chatbotCard.setVisibility(View.GONE);
         clearDamageDetails();
         allPredictions = new JSONArray();
     }
@@ -297,11 +297,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void checkCameraPermissionAndOpenCamera() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            openCamera();
-        } else {
-            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
-        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) openCamera();
+        else requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
     }
 
     private void openCamera() {
@@ -313,11 +310,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void checkGalleryPermissionAndOpenGallery() {
         String permission = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) ?
                 Manifest.permission.READ_MEDIA_IMAGES : Manifest.permission.READ_EXTERNAL_STORAGE;
-        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-            openGallery();
-        } else {
-            requestGalleryPermissionLauncher.launch(permission);
-        }
+        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) openGallery();
+        else requestGalleryPermissionLauncher.launch(permission);
     }
 
     private void openGallery() {
@@ -355,24 +349,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         mMap.addMarker(new MarkerOptions().position(latLng).title(addressString));
                         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
                         textRoadNameValue.setText(address.getAddressLine(0));
-                    } else {
-                        Toast.makeText(MainActivity.this, getString(R.string.toast_address_not_found), Toast.LENGTH_SHORT).show();
-                    }
+                    } else Toast.makeText(MainActivity.this, getString(R.string.toast_address_not_found), Toast.LENGTH_SHORT).show();
                 });
-            } catch (IOException e) {
-                Log.e(TAG, "Geocoding failed", e);
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Layanan geocoding tidak tersedia.", Toast.LENGTH_SHORT).show());
-            }
+            } catch (IOException e) { Log.e(TAG, "Geocoding failed", e); }
         }).start();
     }
 
     private void checkLocationPermissionAndEnableMyLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            enableMyLocation();
-        } else {
-            requestLocationPermissionLauncher.launch(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION});
-        }
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) enableMyLocation();
+        else requestLocationPermissionLauncher.launch(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION});
     }
 
     @SuppressLint("MissingPermission")
@@ -380,12 +366,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (mMap != null) {
             mMap.setMyLocationEnabled(true);
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, location -> {
-                if (location != null) {
-                    LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f));
-                } else {
-                    Log.w(TAG, "Last location is null.");
-                }
+                if (location != null) mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15f));
+                else Log.w(TAG, "Last location is null.");
             });
         }
     }
@@ -396,7 +378,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos);
         String encodedImage = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
-        String inferenceApiUrl = ROBOFLOW_API_URL_PREFIX + ROBOFLOW_MODEL_ENDPOINT + "?api_key=" + ROBOFLOW_API_KEY;
+
+        // --- PERBAIKAN DI SINI ---
+        // Menggunakan konstanta ROBOFLOW_API_URL yang sudah lengkap secara langsung.
+        String inferenceApiUrl = ROBOFLOW_API_URL;
+
+        Log.d(TAG, "Sending image to: " + inferenceApiUrl);
+
         RequestQueue queue = Volley.newRequestQueue(this);
         roboflowResultTextNewUi.setText(getString(R.string.text_processing_image));
         StringRequest stringRequest = new StringRequest(Request.Method.POST, inferenceApiUrl,
@@ -413,14 +401,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 },
                 error -> {
                     Log.e(TAG, "VolleyError", error);
-                    String errorMessage = getString(R.string.text_failed_send_image_to_roboflow);
-                    if (error.networkResponse != null) {
-                        errorMessage += "\nStatus Code: " + error.networkResponse.statusCode;
-                        if (error.networkResponse.data != null) {
-                            errorMessage += "\nResponse: " + new String(error.networkResponse.data);
-                        }
-                    }
-                    roboflowResultTextNewUi.setText(errorMessage);
+                    roboflowResultTextNewUi.setText(getString(R.string.text_failed_send_image_to_roboflow));
                     clearDamageDetails();
                 }
         ) {
@@ -436,11 +417,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             try {
                 List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
                 runOnUiThread(() -> {
-                    if (addresses != null && !addresses.isEmpty()) {
-                        textRoadNameValue.setText(addresses.get(0).getAddressLine(0));
-                    } else {
-                        textRoadNameValue.setText("Jalan tidak diketahui");
-                    }
+                    if (addresses != null && !addresses.isEmpty()) textRoadNameValue.setText(addresses.get(0).getAddressLine(0));
+                    else textRoadNameValue.setText("Jalan tidak diketahui");
                 });
             } catch (IOException e) {
                 Log.e(TAG, "Reverse geocoding failed", e);
@@ -452,27 +430,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void filterAndDisplayPredictions() {
         if (allPredictions.length() == 0) {
             roboflowResultTextNewUi.setText(getString(R.string.text_no_damage_detected));
+            chatbotCard.setVisibility(View.GONE);
             clearDamageDetails();
             return;
         }
         JSONObject bestPrediction = null;
         double maxConfidence = -1.0;
-        StringBuilder resultBuilder = new StringBuilder();
         try {
             for (int i = 0; i < allPredictions.length(); i++) {
                 JSONObject prediction = allPredictions.getJSONObject(i);
                 double confidence = prediction.optDouble("confidence") * 100;
-                if (confidence >= currentConfidenceThreshold) {
-                    // Tampilkan semua prediksi yang lolos filter di teks detail
-                    String predClass = prediction.optString("class", "N/A");
-                    resultBuilder.append(String.format(Locale.getDefault(), getString(R.string.text_detection_result_format), predClass, confidence));
-                    resultBuilder.append("\n");
-
-                    // Tentukan prediksi terbaik untuk ditampilkan di baris utama
-                    if (confidence > maxConfidence) {
-                        maxConfidence = confidence;
-                        bestPrediction = prediction;
-                    }
+                if (confidence >= currentConfidenceThreshold && confidence > maxConfidence) {
+                    maxConfidence = confidence;
+                    bestPrediction = prediction;
                 }
             }
         } catch (JSONException e) {
@@ -482,18 +452,91 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         if (bestPrediction != null) {
-            textDamageValue.setText(bestPrediction.optString("class", "N/A"));
-            textConfidenceValue.setText(String.format(Locale.getDefault(), "%.0f%%", maxConfidence));
-            roboflowResultTextNewUi.setText(resultBuilder.toString().trim());
+            String damageClass = bestPrediction.optString("class", "N/A");
+            String confidenceText = String.format(Locale.getDefault(), "%.0f%%", maxConfidence);
+            String location = textRoadNameValue.getText().toString();
+            textDamageValue.setText(damageClass);
+            textConfidenceValue.setText(confidenceText);
+            generateAndSendOpenAIPrompt(damageClass, confidenceText, location);
         } else {
             roboflowResultTextNewUi.setText(getString(R.string.text_no_damage_detected) + " (di atas " + currentConfidenceThreshold + "%)");
+            chatbotCard.setVisibility(View.GONE);
             clearDamageDetails();
         }
+    }
+
+    private void generateAndSendOpenAIPrompt(String damageClass, String confidence, String location) {
+        if (location.equals(getString(R.string.placeholder_empty)) || location.isEmpty()) {
+            location = "lokasi saat ini (detail tidak tersedia)";
+        }
+        String prompt = String.format(Locale.getDefault(), getString(R.string.openai_prompt_template),
+                damageClass, confidence, location);
+        Log.d(TAG, "Generated OpenAI Prompt: " + prompt);
+        getOpenAIChatResponse(prompt);
+    }
+
+    private void getOpenAIChatResponse(String prompt) {
+        chatbotCard.setVisibility(View.VISIBLE);
+        chatbotProgressBar.setVisibility(View.VISIBLE);
+        textChatbotResponse.setText(getString(R.string.chatbot_thinking));
+
+        RequestQueue queue = Volley.newRequestQueue(this);
+        JSONObject requestBody = new JSONObject();
+        try {
+            requestBody.put("model", "gpt-3.5-turbo");
+            JSONArray messagesArray = new JSONArray();
+            JSONObject systemMessage = new JSONObject();
+            systemMessage.put("role", "system");
+            systemMessage.put("content", "You are a helpful assistant for a road damage reporting app named Roady.");
+            JSONObject userMessage = new JSONObject();
+            userMessage.put("role", "user");
+            userMessage.put("content", prompt);
+            messagesArray.put(systemMessage);
+            messagesArray.put(userMessage);
+            requestBody.put("messages", messagesArray);
+            requestBody.put("max_tokens", 150);
+
+        } catch (JSONException e) {
+            Log.e(TAG, "Failed to create OpenAI request body", e);
+            return;
+        }
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, OPENAI_API_URL, requestBody,
+                response -> {
+                    chatbotProgressBar.setVisibility(View.GONE);
+                    try {
+                        String botResponse = response.getJSONArray("choices").getJSONObject(0)
+                                .getJSONObject("message").getString("content");
+                        textChatbotResponse.setText(botResponse.trim());
+                    } catch (JSONException e) {
+                        Log.e(TAG, "Failed to parse OpenAI response", e);
+                        textChatbotResponse.setText(getString(R.string.chatbot_error));
+                    }
+                },
+                error -> {
+                    chatbotProgressBar.setVisibility(View.GONE);
+                    Log.e(TAG, "OpenAI API Error: " + error.toString());
+                    if (error.networkResponse != null) {
+                        Log.e(TAG, "OpenAI Error Body: " + new String(error.networkResponse.data, StandardCharsets.UTF_8));
+                    }
+                    textChatbotResponse.setText(getString(R.string.chatbot_error));
+                }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Content-Type", "application/json");
+                headers.put("Authorization", "Bearer " + OPENAI_API_KEY);
+                return headers;
+            }
+        };
+        queue.add(jsonObjectRequest);
     }
 
     private void clearDamageDetails() {
         textRoadNameValue.setText(getString(R.string.placeholder_empty));
         textDamageValue.setText(getString(R.string.placeholder_empty));
         textConfidenceValue.setText(getString(R.string.placeholder_empty));
+        chatbotCard.setVisibility(View.GONE);
     }
 }
