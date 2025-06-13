@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private TextView textChatbotResponse;
 
     // State Variables
-    private int currentConfidenceThreshold = 70;
+    private int currentConfidenceThreshold = 50;
     private Bitmap currentPhoto;
     private JSONArray allPredictions = new JSONArray();
 
@@ -371,6 +371,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             });
         }
     }
+    private String getDamageScale(String damageClass) {
+        switch (damageClass.toLowerCase()) {
+            case "manhole":
+                return "Minimum Damage";
+            case "patch":
+                return "Moderate Damage";
+            case "fatigue crack":
+                return "Minimum Damage";
+            default:
+                return "Unknown";
+        }
+    }
 
     private void sendToRoboflow(Bitmap bitmap) {
         if (mMap != null) reverseGeocode(mMap.getCameraPosition().target);
@@ -454,11 +466,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (bestPrediction != null) {
             String damageClass = bestPrediction.optString("class", "N/A");
             String confidenceText = String.format(Locale.getDefault(), "%.0f%%", maxConfidence);
+            String scale = getDamageScale(damageClass); // <-- Tambahkan ini
             String location = textRoadNameValue.getText().toString();
-            textDamageValue.setText(damageClass);
+
+            textDamageValue.setText(damageClass + " - " + scale); // <-- Gabungkan output
             textConfidenceValue.setText(confidenceText);
+
             generateAndSendOpenAIPrompt(damageClass, confidenceText, location);
-        } else {
+        }
+        else {
             roboflowResultTextNewUi.setText(getString(R.string.text_no_damage_detected) + " (di atas " + currentConfidenceThreshold + "%)");
             chatbotCard.setVisibility(View.GONE);
             clearDamageDetails();

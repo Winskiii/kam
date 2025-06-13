@@ -2,23 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/navigation_devices"
-        android:title="@string/bottom_nav_devices" />
-    <!-- android:icon="@drawable/ic_devices" dihapus sementara -->
-    <!-- Anda bisa menggunakan ikon standar Android jika mau:
-         android:icon="@android:drawable/ic_menu_mapmode" -->
+        android:icon="@drawable/ic_devices" android:title="@string/bottom_nav_devices" />
     <item
         android:id="@+id/navigation_camera"
-        android:title="@string/bottom_nav_camera" />
-    <!-- android:icon="@drawable/ic_camera_bottom_nav" dihapus sementara -->
-    <!-- android:icon="@android:drawable/ic_menu_camera" -->
+        android:icon="@drawable/ic_camera" android:title="@string/bottom_nav_camera" />
     <item
         android:id="@+id/navigation_history"
-        android:title="@string/bottom_nav_history" />
-    <!-- android:icon="@drawable/ic_history" dihapus sementara -->
-    <!-- android:icon="@android:drawable/ic_menu_recent_history" -->
+        android:icon="@drawable/ic_history" android:title="@string/bottom_nav_history" />
     <item
         android:id="@+id/navigation_profile"
-        android:title="@string/bottom_nav_profile" />
-    <!-- android:icon="@drawable/ic_profile" dihapus sementara -->
-    <!-- android:icon="@android:drawable/ic_menu_manage" -->
+        android:icon="@drawable/ic_profile" android:title="@string/bottom_nav_profile" />
 </menu>

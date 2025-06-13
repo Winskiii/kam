@@ -8,6 +8,7 @@
     <color name="colorPrimary">#6200EE</color> <!-- Contoh: Ungu -->
     <color name="colorPrimaryDark">#3700B3</color> <!-- Contoh: Ungu Tua -->
     <color name="colorAccent">#03DAC5</color> <!-- Contoh: Teal -->
+    <color name="text_dark_primary">#2D3748</color>
 
     <!-- Warna spesifik untuk UI Peta Baru -->
     <color name="orange_text">#FFA500</color> <!-- Oranye untuk teks tombol Help/Sign Out dan ikon aktif bottom nav -->
@@ -16,6 +17,10 @@
     <color name="grey_light">#F0F0F0</color>  <!-- Abu-abu muda untuk background hasil Roboflow -->
     <color name="text_dark">#333333</color>   <!-- Hitam lembut untuk teks utama -->
     <color name="green_indicator">#4CAF50</color> <!-- Hijau untuk indikator "Minimum damage" -->
+    <color name="card_purple_light">#A9AAFF</color>
+    <color name="text_dark_secondary">#718096</color> <!-- Warna teks sekunder (abu-abu) -->
+    <color name="accent_blue">#3B82F6</color> <!-- Warna biru untuk tombol Help/Sign Out -->
+    <color name="app_background">#F3F4F6</color> <!-- Warna latar belakang utama abu-abu muda -->
 
     <!-- Warna yang mungkin dirujuk dari UI sebelumnya jika masih ada (opsional) -->
     <color name="red_error">#D32F2F</color> <!-- Merah untuk pesan error atau jumlah transaksi negatif -->

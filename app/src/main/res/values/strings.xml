@@ -13,8 +13,9 @@
     <string name="info_minimum_damage">Minimum damage</string>
 
     <string name="label_road_name">Road name:</string>
-    <string name="label_damage">Damage:</string>
-    <string name="label_confidence">Confidence:</string>
+    <string name="label_damage">Type of damage:</string>
+    <string name="label_scale">Scale:</string>
+    <string name="label_confidence">Confidence level:</string>
     <string name="placeholder_empty">-</string>
 
     <!-- Bottom Navigation Menu Items -->
