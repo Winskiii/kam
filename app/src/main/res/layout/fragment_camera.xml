@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="32dp"
+    android:background="#F9F7FF"
+    tools:context=".CameraFragment">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/image_preview_card"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/button_take_photo"
+        android:layout_marginBottom="32dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp">
+
+        <ImageView
+            android:id="@+id/image_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#EAEAEA"
+            android:scaleType="centerCrop"
+            android:contentDescription="@string/preview_of_the_captured_image" />
+
+    </androidx.cardview.widget.CardView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_take_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="60dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:text="@string/take_photo"
+        android:textAllCaps="false"
+        android:textSize="18sp"
+        android:paddingStart="40dp"
+        android:paddingEnd="40dp"
+        app:cornerRadius="30dp"
+        app:backgroundTint="#6C63FF"/>
+
+</RelativeLayout>

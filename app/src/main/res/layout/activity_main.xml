@@ -4,39 +4,30 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
     tools:context=".MainActivity">
 
-    <!-- Top Toolbar -->
     <RelativeLayout
         android:id="@+id/top_toolbar_new"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@drawable/gradient_top_bottom"
-        android:elevation="4dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp">
-
+        android:elevation="4dp">
         <TextView
             android:id="@+id/toolbar_help_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
+            android:padding="8dp"
             android:text="@string/toolbar_help"
             android:textColor="#6C63FF"
             android:textSize="16sp"
-            android:textStyle="bold"
-            android:padding="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"/>
-
+            android:textStyle="bold" />
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:orientation="vertical"
-            android:gravity="center_horizontal">
-
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
             <TextView
                 android:id="@+id/toolbar_title_roady"
                 android:layout_width="wrap_content"
@@ -45,389 +36,43 @@
                 android:textColor="@color/black"
                 android:textSize="20sp"
                 android:textStyle="bold" />
-
             <TextView
                 android:id="@+id/toolbar_subtitle_roady"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/toolbar_subtitle_road_damage"
                 android:textColor="#8E8E93"
-                android:textSize="12sp"/>
+                android:textSize="12sp" />
         </LinearLayout>
-
         <TextView
             android:id="@+id/toolbar_sign_out_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
+            android:padding="8dp"
             android:text="@string/toolbar_sign_out"
             android:textColor="#6C63FF"
             android:textSize="16sp"
-            android:textStyle="bold"
-            android:padding="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"/>
+            android:textStyle="bold" />
     </RelativeLayout>
 
-    <!-- Main Content Area -->
-    <LinearLayout
-        android:id="@+id/main_content_area"
+    <FrameLayout
+        android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/top_toolbar_new"
-        android:layout_above="@+id/bottom_navigation_view"
-        android:orientation="vertical">
+        android:layout_above="@id/bottom_navigation_view"
+        android:layout_below="@id/top_toolbar_new" />
 
-        <!-- Map Container -->
-        <FrameLayout
-            android:id="@+id/map_frame_container"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.5">
-
-            <fragment
-                android:id="@+id/map_fragment"
-                android:name="com.google.android.gms.maps.SupportMapFragment"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-            <!-- Search Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/search_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <EditText
-                        android:id="@+id/edit_text_search"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@android:color/transparent"
-                        android:hint="@string/hint_search_road_name"
-                        android:imeOptions="actionSearch"
-                        android:inputType="text"
-                        android:maxLines="1"
-                        android:padding="16dp"
-                        android:textSize="16sp"
-                        android:autofillHints="postalAddress" />
-
-                    <ImageButton
-                        android:id="@+id/button_search"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="@string/desc_search_button"
-                        android:padding="16dp"
-                        android:src="@android:drawable/ic_menu_search"
-                        app:tint="#8E8E93" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-        </FrameLayout>
-
-        <!-- Details Panel -->
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.5"
-            android:fillViewport="true"
-            android:background="#F2F2F7">
-
-            <LinearLayout
-                android:id="@+id/details_panel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <!-- Back Button -->
-                <ImageView
-                    android:id="@+id/details_back_button"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:src="@android:drawable/ic_media_previous"
-                    android:contentDescription="@string/desc_back_button"
-                    android:layout_marginBottom="16dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    app:tint="#5D5FEF"/>
-
-                <!-- Main Card -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="@color/white"
-                    android:layout_marginBottom="16dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <!-- Image Placeholder -->
-                        <FrameLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="120dp"
-                            android:layout_marginBottom="16dp"
-                            android:background="#F0F0F0"
-                            android:layout_gravity="center">
-
-                            <ImageView
-                                android:id="@+id/damage_image_placeholder"
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:layout_gravity="center"
-                                android:src="@android:drawable/ic_menu_gallery"
-                                app:tint="#C7C7CC"
-                                android:contentDescription="@string/desc_captured_image_roboflow" />
-
-                            <!-- Real damage image will be shown here -->
-                            <ImageView
-                                android:id="@+id/roboflow_image_view_new_ui"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:scaleType="centerCrop"
-                                android:visibility="gone"
-                                android:contentDescription="@string/desc_captured_image_roboflow" />
-                        </FrameLayout>
-
-                        <!-- Confidence Threshold Section -->
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/label_confidence_threshold"
-                            android:textColor="#1C1C1E"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="8dp"/>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:layout_marginBottom="8dp">
-
-                            <SeekBar
-                                android:id="@+id/seekbar_confidence"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:max="100"
-                                android:progress="50"
-                                android:progressTint="#6C63FF"
-                                android:thumbTint="#6C63FF"
-                                android:layout_marginEnd="12dp"/>
-
-                            <TextView
-                                android:id="@+id/text_confidence_slider_value"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="50%"
-                                android:textColor="#5D5FEF"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                android:minWidth="40dp"
-                                android:gravity="center"/>
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:background="#E5E5EA"
-                            android:layout_marginVertical="16dp"/>
-
-                        <!-- Details Section -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical">
-
-                            <!-- Road Name -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:layout_marginBottom="12dp">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="@string/label_road_name"
-                                    android:textColor="#8E8E93"
-                                    android:textSize="14sp"/>
-
-                                <TextView
-                                    android:id="@+id/text_road_name_value"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/placeholder_empty"
-                                    android:textColor="#1C1C1E"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold"/>
-                            </LinearLayout>
-
-                            <!-- Type of Damage -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:layout_marginBottom="12dp">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Type of damage:"
-                                    android:textColor="#8E8E93"
-                                    android:textSize="14sp"/>
-
-                                <TextView
-                                    android:id="@+id/text_damage_value"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/placeholder_empty"
-                                    android:textColor="#1C1C1E"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold"/>
-                            </LinearLayout>
-
-                            <!-- Scale -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:layout_marginBottom="12dp">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Scale:"
-                                    android:textColor="#8E8E93"
-                                    android:textSize="14sp"/>
-
-                                <TextView
-                                    android:id="@+id/text_damage_scale_value"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/placeholder_empty"
-                                    android:textColor="#1C1C1E"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold"/>
-                            </LinearLayout>
-
-                            <!-- Confidence Level -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Confidence level:"
-                                    android:textColor="#8E8E93"
-                                    android:textSize="14sp"/>
-
-                                <TextView
-                                    android:id="@+id/text_confidence_value"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/placeholder_empty"
-                                    android:textColor="#1C1C1E"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold"/>
-                            </LinearLayout>
-                        </LinearLayout>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- AI Assistant Card -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/chatbot_card"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#6C63FF"
-                    android:visibility="gone"
-                    tools:visibility="visible">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/ai_assistant_title"
-                            android:textColor="@color/white"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="8dp"/>
-
-                        <ProgressBar
-                            android:id="@+id/chatbot_progress_bar"
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="match_parent"
-                            android:layout_height="4dp"
-                            android:indeterminate="true"
-                            android:progressTint="@color/white"
-                            android:indeterminateTint="@color/white"
-                            android:visibility="gone"
-                            android:layout_marginBottom="8dp"
-                            tools:visibility="visible"/>
-
-                        <TextView
-                            android:id="@+id/text_chatbot_response"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/white"
-                            android:textSize="14sp"
-                            android:lineSpacingExtra="4dp"
-                            tools:text="AI assistant command and dialogue still the same"/>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Hidden elements for compatibility -->
-                <TextView
-                    android:id="@+id/roboflow_result_text_new_ui"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    android:text="@string/placeholder_detection_results"/>
-            </LinearLayout>
-        </ScrollView>
-    </LinearLayout>
-
-    <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@drawable/gradient_top_bottom"
+        app:elevation="8dp"
         app:itemIconTint="@drawable/bottom_nav_icon_color_selector"
         app:itemTextColor="@drawable/bottom_nav_icon_color_selector"
         app:labelVisibilityMode="labeled"
-        app:elevation="8dp"
         app:menu="@menu/bottom_navigation_menu" />
 
 </RelativeLayout>

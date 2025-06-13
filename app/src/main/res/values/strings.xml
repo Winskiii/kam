@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">Roady</string>
 
-    <!-- String untuk UI Baru -->
     <string name="toolbar_help">Help</string>
     <string name="toolbar_title_roady">Roady</string>
     <string name="toolbar_subtitle_road_damage">Road damage detection</string>
@@ -18,20 +17,17 @@
     <string name="label_confidence">Confidence level:</string>
     <string name="placeholder_empty">-</string>
 
-    <!-- Bottom Navigation Menu Items -->
     <string name="bottom_nav_devices">Devices</string>
     <string name="bottom_nav_camera">Camera</string>
     <string name="bottom_nav_history">History</string>
     <string name="bottom_nav_profile">Profile</string>
 
-    <!-- Deskripsi Konten (Accessibility) -->
     <string name="desc_back_button">Tombol Kembali</string>
     <string name="desc_captured_image_roboflow">Gambar yang ditangkap untuk deteksi kerusakan</string>
     <string name="desc_placeholder_map_image">Gambar Placeholder Peta</string>
     <string name="desc_map_pin_image">Ikon Pin Peta</string>
     <string name="desc_green_indicator_dot">Indikator Titik Hijau</string>
 
-    <!-- String untuk Toast dan pesan di MainActivity.java -->
     <string name="toast_back_button_clicked">Tombol Kembali Diklik</string>
     <string name="toast_no_camera_app">Tidak ada aplikasi kamera ditemukan</string>
     <string name="toast_camera_permission_denied">Izin kamera ditolak</string>
@@ -51,11 +47,9 @@
     <string name="camera_permission_needed_for_feature">Izin kamera dibutuhkan untuk fitur ini</string>
     <string name="placeholder_detection_results">Hasil deteksi akan muncul di sini.</string>
 
-    <!-- String untuk Confidence Slider -->
     <string name="label_confidence_threshold">Confidence Threshold:</string>
     <string name="text_confidence_percentage">%1$d%%</string>
 
-    <!-- String BARU untuk pilihan sumber gambar -->
     <string name="dialog_title_select_image_source">Pilih Sumber Gambar</string>
     <string name="option_camera">Kamera</string>
     <string name="option_gallery">Galeri</string>
@@ -73,16 +67,18 @@
     <string name="openai_prompt_template">Anda adalah asisten virtual untuk aplikasi pelaporan kerusakan jalan bernama "Roady". Sapa pengguna dengan ramah dan informatif berdasarkan data berikut. Mulailah dengan "Halo!". Ringkas informasi ini dalam satu paragraf yang mudah dibaca: 1. Kendala: Jalan Rusak. 2. Jenis kerusakan yang terdeteksi: \'%1$s\'. 3. Tingkat keyakinan deteksi: %2$s. 4. Perkiraan lokasi: %3$s. Setelah itu, tanyakan kepada pengguna
         apakah mereka ingin menambahkan informasi lebih lanjut atau melaporkannya.</string>
 
-    <!-- String yang sudah ada di file Anda, bisa dipertahankan jika masih digunakan -->
     <string name="action_settings">Settings</string>
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
-
     <string name="lorem_ipsum">
         Cras bibendum enim a justo luctus
-        vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
     </string>
+
+    <string name="preview_of_the_captured_image">Pratinjau gambar yang ditangkap</string>
+    <string name="take_photo">Ambil Foto</string>
+    <string name="user_profile_picture">Gambar profil pengguna</string>
+
 </resources>
