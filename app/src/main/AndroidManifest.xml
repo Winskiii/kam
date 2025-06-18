@@ -21,19 +21,33 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Kam"
         tools:targetApi="31">
+
+        <!-- API Key Map -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyB_1mgpCOuJpSbCSymSG-Zt3Df0ge5aUik" />
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Kam">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
+        <activity
+            android:name=".LandingActivity"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+
+        <!-- Login & Register -->
+        <activity android:name=".LoginActivity"/>
+        <activity android:name=".RegisterActivity"/>
+
+        <!-- Main App -->
+        <activity android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Kam" />
+
+        <!-- FileProvider untuk kamera -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -43,7 +57,5 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"/>
         </provider>
-
     </application>
-
 </manifest>

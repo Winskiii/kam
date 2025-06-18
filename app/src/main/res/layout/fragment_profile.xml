@@ -51,24 +51,6 @@
                 android:text="Institut Teknologi Sepuluh Nopember"
                 android:textColor="@android:color/white"
                 android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/profile_email"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="wins**********@gmail.com"
-                android:textColor="@android:color/white"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/profile_phone"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="0877*********"
-                android:textColor="@android:color/white"
-                android:textSize="16sp" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </LinearLayout>

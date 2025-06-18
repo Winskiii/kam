@@ -2,6 +2,7 @@ package app.nbs.kam;
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -24,12 +26,15 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
     private View topToolbar;
     private BottomNavigationView bottomNavigationView;
+    private TextView signOutButton;
 
     private ActivityResultLauncher<Intent> cameraActivityResultLauncher, galleryActivityResultLauncher;
     private ActivityResultLauncher<String> requestCameraPermissionLauncher, requestGalleryPermissionLauncher;
@@ -42,47 +47,63 @@ public class MainActivity extends AppCompatActivity {
         initializeViews();
         setupActivityResultLaunchers();
         setupNavigationListener();
+        setupSignOutListener();
 
         if (savedInstanceState == null) {
-            // Muat DevicesFragment sebagai tampilan awal
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new DevicesFragment())
                     .commit();
-            setNavbarGradient(R.drawable.gradient_top_bottom); // Set gradasi awal
+            setNavbarGradient(R.drawable.gradient_top_bottom);
         }
     }
 
     private void initializeViews() {
         topToolbar = findViewById(R.id.top_toolbar_new);
         bottomNavigationView = findViewById(R.id.bottom_navigation_view);
+        signOutButton = findViewById(R.id.signOutText);
     }
 
-    // --- PERBAIKAN UTAMA DI SINI ---
+    private void setupSignOutListener() {
+        if (signOutButton != null) {
+            signOutButton.setOnClickListener(v -> {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Konfirmasi Logout")
+                        .setMessage("Apakah kamu yakin ingin keluar?")
+                        .setPositiveButton("Ya", (dialog, which) -> {
+                            getSharedPreferences("user_pref", MODE_PRIVATE).edit().clear().apply();
+                            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                        })
+                        .setNegativeButton("Batal", (dialog, which) -> dialog.dismiss())
+                        .show();
+            });
+        }
+    }
+
     private void setupNavigationListener() {
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
+            if (item.isChecked()) return false;
+
             Fragment selectedFragment = null;
-
-            // Jangan buat fragment baru jika item yang diklik sudah aktif
-            if (item.isChecked()) {
-                return false;
-            }
-
             if (itemId == R.id.navigation_devices) {
-                selectedFragment = new DevicesFragment(); // Buat instance baru hanya saat dipilih manual
+                selectedFragment = new DevicesFragment();
                 setNavbarGradient(R.drawable.gradient_top_bottom);
             } else if (itemId == R.id.navigation_camera) {
                 selectedFragment = new CameraFragment();
                 setNavbarGradient(R.drawable.gradient_top_bottom);
+            } else if (itemId == R.id.navigation_history) {
+                selectedFragment = new HistoryFragment();
+                setNavbarGradient(R.drawable.gradient_history_background);
             } else if (itemId == R.id.navigation_profile) {
                 selectedFragment = new ProfileFragment();
                 setNavbarGradient(R.drawable.gradient_profile_background);
             }
-            // else if (itemId == R.id.navigation_history) { ... }
 
             if (selectedFragment != null) {
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, selectedFragment, String.valueOf(itemId)) // Beri tag unik
+                        .replace(R.id.fragment_container, selectedFragment)
                         .commit();
                 return true;
             }
@@ -90,42 +111,15 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // --- PERBAIKAN KEDUA DI SINI ---
-    private void processAndDisplayImage(Bitmap bitmap) {
-        if (bitmap == null) return;
-
-        // 1. Buat instance baru dari DevicesFragment
-        DevicesFragment devicesFragment = new DevicesFragment();
-
-        // 2. Siapkan "paket" (Bundle) untuk mengirim data
-        Bundle bundle = new Bundle();
-        bundle.putParcelable("captured_image", bitmap);
-        devicesFragment.setArguments(bundle);
-
-        // 3. Ganti fragment di container dengan fragment yang sudah berisi data
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragment_container, devicesFragment)
-                .commit();
-
-        // 4. HANYA UPDATE TAMPILAN NAVIGASI, JANGAN PICU LISTENER LAGI
-        // Matikan listener sementara, ubah item terpilih, lalu nyalakan lagi
-        bottomNavigationView.setOnItemSelectedListener(null);
-        bottomNavigationView.setSelectedItemId(R.id.navigation_devices);
-        setupNavigationListener(); // Pasang kembali listener untuk penggunaan normal
-    }
-
     public void initiateImageCapture() {
         final CharSequence[] options = {"Ambil dari Kamera", "Pilih dari Galeri"};
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Pilih Sumber Gambar");
-        builder.setItems(options, (dialog, item) -> {
-            if (options[item].equals("Ambil dari Kamera")) {
-                checkCameraPermissionAndOpenCamera();
-            } else if (options[item].equals("Pilih dari Galeri")) {
-                checkGalleryPermissionAndOpenGallery();
-            }
-        });
-        builder.show();
+        new AlertDialog.Builder(this)
+                .setTitle("Pilih Sumber Gambar")
+                .setItems(options, (dialog, item) -> {
+                    if (item == 0) checkCameraPermissionAndOpenCamera();
+                    else if (item == 1) checkGalleryPermissionAndOpenGallery();
+                })
+                .show();
     }
 
     private void setupActivityResultLaunchers() {
@@ -144,7 +138,12 @@ public class MainActivity extends AppCompatActivity {
                 Bundle extras = result.getData().getExtras();
                 if (extras != null) {
                     Bitmap imageBitmap = (Bitmap) extras.get("data");
-                    processAndDisplayImage(imageBitmap);
+                    if (imageBitmap != null) {
+                        Uri imageUri = saveBitmapToCache(imageBitmap); // Simpan bitmap dan dapatkan URI
+                        if (imageUri != null) {
+                            processAndDisplayImageUri(imageUri); // Proses URI
+                        }
+                    }
                 }
             }
         });
@@ -153,18 +152,48 @@ public class MainActivity extends AppCompatActivity {
             if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                 Uri imageUri = result.getData().getData();
                 if (imageUri != null) {
-                    try {
-                        Bitmap bitmap = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) ?
-                                ImageDecoder.decodeBitmap(ImageDecoder.createSource(this.getContentResolver(), imageUri)) :
-                                MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-                        processAndDisplayImage(bitmap);
-                    } catch (IOException e) {
-                        Log.e("MainActivity", "Gagal memuat gambar dari galeri", e);
-                    }
+                    processAndDisplayImageUri(imageUri); // Langsung proses URI
                 }
             }
         });
     }
+
+    // --- METODE BARU: Menyimpan bitmap ke file cache dan mengembalikan URI-nya ---
+    private Uri saveBitmapToCache(Bitmap bitmap) {
+        File cachePath = new File(getCacheDir(), "images");
+        cachePath.mkdirs(); // Buat direktori jika belum ada
+        try {
+            File file = new File(cachePath, "image.jpg");
+            FileOutputStream stream = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+            stream.close();
+            return Uri.fromFile(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // --- METODE BARU: Mengirim URI (bukan bitmap) ke fragment ---
+    private void processAndDisplayImageUri(Uri imageUri) {
+        if (imageUri == null) return;
+
+        DevicesFragment devicesFragment = new DevicesFragment();
+        Bundle bundle = new Bundle();
+        bundle.putString("captured_image_uri", imageUri.toString()); // Kirim URI sebagai String
+        devicesFragment.setArguments(bundle);
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, devicesFragment)
+                .commit();
+
+        // Update UI BottomNav tanpa memicu listener lagi
+        bottomNavigationView.setOnItemSelectedListener(null);
+        bottomNavigationView.setSelectedItemId(R.id.navigation_devices);
+        setupNavigationListener();
+    }
+
+    // Metode lama processAndDisplayImage(Bitmap) bisa dihapus
 
     private void checkCameraPermissionAndOpenCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {

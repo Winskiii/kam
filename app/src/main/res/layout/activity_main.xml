@@ -45,15 +45,14 @@
                 android:textSize="12sp" />
         </LinearLayout>
         <TextView
-            android:id="@+id/toolbar_sign_out_button"
+            android:id="@+id/signOutText"
+            android:text="Sign Out"
+            android:textColor="@android:color/holo_red_light"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:padding="8dp"
-            android:text="@string/toolbar_sign_out"
-            android:textColor="#6C63FF"
-            android:textSize="16sp"
+            android:layout_marginEnd="8dp"
             android:textStyle="bold" />
     </RelativeLayout>
 

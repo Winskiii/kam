@@ -3,11 +3,16 @@ package app.nbs.kam;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.ImageDecoder;
 import android.location.Address;
 import android.location.Geocoder;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -32,6 +37,7 @@ import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -51,18 +57,24 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DevicesFragment extends Fragment implements OnMapReadyCallback {
 
     private static final String TAG = "DevicesFragment";
 
-    // --- Variabel UI dan State (Lengkap) ---
+    // --- Variabel UI dan State ---
     private GoogleMap mMap;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private final LatLng defaultLocation = new LatLng(-6.2088, 106.8456);
@@ -77,15 +89,14 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
     private CardView chatbotCard;
     private ProgressBar chatbotProgressBar;
     private TextView textChatbotResponse;
+    private Bitmap currentBitmap;
 
     private int currentConfidenceThreshold = 50;
     private JSONArray allPredictions = new JSONArray();
 
-    // --- Konstanta API (Lengkap) ---
+    // --- Konstanta API ---
     private static final String ROBOFLOW_API_URL = "https://detect.roboflow.com/road-damage-fhdff/1?api_key=GzmSCfORrjN5uttBwYNf";
-
-    // --- Konstanta untuk Gemini API ---
-    private static final String GEMINI_API_KEY = "AIzaSyB_VRWMdouEQe8r6Lf--uSijZfACNGuDfI";
+    private static final String GEMINI_API_KEY = "MASUKKAN_API_KEY_GEMINI_ANDA_DI_SINI";
     private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + GEMINI_API_KEY;
 
     private ActivityResultLauncher<String[]> requestLocationPermissionLauncher;
@@ -111,13 +122,40 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
             mapFragment.getMapAsync(this);
         }
 
-        if (getArguments() != null && getArguments().containsKey("captured_image")) {
-            Bitmap imageBitmap = getArguments().getParcelable("captured_image");
-            if (imageBitmap != null) {
-                roboflowImageViewNewUi.setImageBitmap(imageBitmap);
-                roboflowImageViewNewUi.setVisibility(View.VISIBLE);
-                damageImagePlaceholder.setVisibility(View.GONE);
-                sendToRoboflow(imageBitmap);
+        // --- PERBAIKAN UTAMA DI SINI ---
+        if (getArguments() != null && getArguments().containsKey("captured_image_uri")) {
+            String imageUriString = getArguments().getString("captured_image_uri");
+            if (imageUriString != null) {
+                // Buat executor untuk menjalankan tugas di background
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+                executor.execute(() -> {
+                    // --- PROSES BERAT DI BACKGROUND THREAD ---
+                    try {
+                        Uri imageUri = Uri.parse(imageUriString);
+                        Bitmap loadedBitmap;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            loadedBitmap = ImageDecoder.decodeBitmap(ImageDecoder.createSource(requireContext().getContentResolver(), imageUri));
+                        } else {
+                            loadedBitmap = MediaStore.Images.Media.getBitmap(requireContext().getContentResolver(), imageUri);
+                        }
+                        currentBitmap = loadedBitmap.copy(Bitmap.Config.ARGB_8888, true);
+
+                        // Setelah selesai, kembali ke UI Thread untuk update tampilan
+                        if (isAdded()) {
+                            requireActivity().runOnUiThread(() -> {
+                                roboflowImageViewNewUi.setImageBitmap(currentBitmap);
+                                roboflowImageViewNewUi.setVisibility(View.VISIBLE);
+                                damageImagePlaceholder.setVisibility(View.GONE);
+                                sendToRoboflow(currentBitmap);
+                            });
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        if (isAdded()) {
+                            requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Gagal memuat gambar", Toast.LENGTH_SHORT).show());
+                        }
+                    }
+                });
             }
         }
     }
@@ -129,6 +167,9 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
         mMap.getUiSettings().setZoomControlsEnabled(true);
         checkLocationPermissionAndEnableMyLocation();
     }
+
+    // ... (Sisa semua metode lain dari initializeViews hingga akhir tidak ada perubahan)
+    // Cukup salin-tempel seluruh file ini untuk menggantikan file lama Anda.
 
     private void initializeViews(View view) {
         editTextSearch = view.findViewById(R.id.edit_text_search);
@@ -279,6 +320,8 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
             textDamageScaleValue.setText(scale);
             textConfidenceValue.setText(confidenceText);
 
+            saveHistory(currentBitmap, location, damageClass, scale, confidenceText);
+
             generateAndSendPromptToAI(damageClass, scale, confidenceText, location);
         } else {
             Toast.makeText(requireContext(), "Tidak ada kerusakan di atas threshold " + currentConfidenceThreshold + "%", Toast.LENGTH_SHORT).show();
@@ -301,10 +344,8 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
         if (location.equals(getString(R.string.placeholder_empty)) || location.isEmpty()) {
             location = "lokasi saat ini (detail tidak tersedia)";
         }
-        // Menggunakan prompt baru yang lebih cerdas untuk Gemini
         String prompt = String.format(Locale.getDefault(), getString(R.string.gemini_prompt_template),
                 damageClass, scale, confidence, location);
-
         Log.d(TAG, "Generated AI Prompt: " + prompt);
         getGeminiChatResponse(prompt);
     }
@@ -317,7 +358,6 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
         textChatbotResponse.setText(getString(R.string.chatbot_thinking));
 
         RequestQueue queue = Volley.newRequestQueue(requireContext());
-
         JSONObject requestBody = new JSONObject();
         try {
             JSONArray contentsArray = new JSONArray();
@@ -372,6 +412,54 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
         );
         queue.add(jsonObjectRequest);
     }
+
+    private String saveImageToInternalStorage(Bitmap bitmap) {
+        if (!isAdded()) return null;
+        ContextWrapper cw = new ContextWrapper(requireContext());
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+        File mypath = new File(directory, "damage_" + timeStamp + ".jpg");
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(mypath);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, fos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            try {
+                if (fos != null) {
+                    fos.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return mypath.getAbsolutePath();
+    }
+
+    private void saveHistory(Bitmap image, String roadName, String damageType, String scale, String confidence) {
+        if (!isAdded() || image == null) return;
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            String imagePath = saveImageToInternalStorage(image);
+            if (imagePath == null) {
+                Log.e(TAG, "Failed to save image to internal storage.");
+                return;
+            }
+
+            HistoryItem historyItem = new HistoryItem(roadName, damageType, scale, confidence, imagePath);
+            HistoryDatabase.getDatabase(requireContext()).historyDao().insert(historyItem);
+
+            if (isAdded()){
+                requireActivity().runOnUiThread(() -> Toast.makeText(requireContext(), "Saved to history", Toast.LENGTH_SHORT).show());
+            }
+        });
+    }
+
     private void performSearch() {
         String searchString = editTextSearch.getText().toString().trim();
         if (!searchString.isEmpty()) {
@@ -458,7 +546,6 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
             }
         }).start();
     }
-
 
     private void clearDamageDetails() {
         if (!isAdded()) return;
