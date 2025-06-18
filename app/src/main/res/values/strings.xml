@@ -64,8 +64,19 @@
     <string name="ai_assistant_title">AI Assistant</string>
     <string name="chatbot_thinking">AI sedang menganalisis kerusakan...</string>
     <string name="chatbot_error">Maaf, AI tidak dapat memberikan respons saat ini.</string>
-    <string name="openai_prompt_template">Anda adalah asisten virtual untuk aplikasi pelaporan kerusakan jalan bernama "Roady". Sapa pengguna dengan ramah dan informatif berdasarkan data berikut. Mulailah dengan "Halo!". Ringkas informasi ini dalam satu paragraf yang mudah dibaca: 1. Kendala: Jalan Rusak. 2. Jenis kerusakan yang terdeteksi: \'%1$s\'. 3. Tingkat keyakinan deteksi: %2$s. 4. Perkiraan lokasi: %3$s. Setelah itu, tanyakan kepada pengguna
-        apakah mereka ingin menambahkan informasi lebih lanjut atau melaporkannya.</string>
+    <string name="gemini_prompt_template">
+        Peran: Anda adalah seorang ahli analisis pemeliharaan jalan untuk aplikasi "Roady".
+        Tugas: Berikan analisis singkat dan saran kepada pengguna berdasarkan laporan kerusakan jalan yang baru saja diterima.
+        Gaya Bahasa: Gunakan Bahasa Indonesia yang jelas, membantu, dan sedikit formal.
+        Jangan hanya mengulang data. Jelaskan potensi bahaya dan berikan saran tindakan.
+        Mulai respons Anda dengan "Analisis Laporan:".
+
+        Berikut adalah data laporannya:
+        - Jenis Kerusakan: %1$s
+        - Skala Kerusakan: %2$s
+        - Keyakinan Deteksi: %3$s
+        - Perkiraan Lokasi: %4$s
+    </string>
 
     <string name="action_settings">Settings</string>
     <string name="first_fragment_label">First Fragment</string>

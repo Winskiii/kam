@@ -83,8 +83,10 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
 
     // --- Konstanta API (Lengkap) ---
     private static final String ROBOFLOW_API_URL = "https://detect.roboflow.com/road-damage-fhdff/1?api_key=GzmSCfORrjN5uttBwYNf";
-    private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-    private static final String OPENAI_API_KEY = "sk-proj-aclufF3BV3QMdrGjmphkGpO8Pyl1_0b5CAPIcVIWeGHbCg_uJyvxei2-_lrhyHRtnwNS6k_sVKjLqT3BlbkFJmV-mjdrGWKpDZjF-HBeLB2mXxKi-b2x95AZArJzpZume4jui2hh9kP0nil_2EojkQ4oI4WKtoA";
+
+    // --- Konstanta untuk Gemini API ---
+    private static final String GEMINI_API_KEY = "AIzaSyB_VRWMdouEQe8r6Lf--uSijZfACNGuDfI";
+    private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + GEMINI_API_KEY;
 
     private ActivityResultLauncher<String[]> requestLocationPermissionLauncher;
 
@@ -277,7 +279,7 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
             textDamageScaleValue.setText(scale);
             textConfidenceValue.setText(confidenceText);
 
-            generateAndSendOpenAIPrompt(damageClass, confidenceText, location);
+            generateAndSendPromptToAI(damageClass, scale, confidenceText, location);
         } else {
             Toast.makeText(requireContext(), "Tidak ada kerusakan di atas threshold " + currentConfidenceThreshold + "%", Toast.LENGTH_SHORT).show();
             chatbotCard.setVisibility(View.GONE);
@@ -287,18 +289,27 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
 
     private String getDamageScale(String damageClass) {
         switch (damageClass.toLowerCase()) {
-            case "pothole":
-                return "Major Damage";
-            case "patch":
-                return "Moderate Damage";
-            case "fatigue crack":
-                return "Minimum Damage";
-            default:
-                return "Unknown";
+            case "pothole": return "Major Damage";
+            case "patch": return "Moderate Damage";
+            case "fatigue crack": return "Minimum Damage";
+            default: return "Unknown";
         }
     }
 
-    private void getOpenAIChatResponse(String prompt) {
+    private void generateAndSendPromptToAI(String damageClass, String scale, String confidence, String location) {
+        if (!isAdded()) return;
+        if (location.equals(getString(R.string.placeholder_empty)) || location.isEmpty()) {
+            location = "lokasi saat ini (detail tidak tersedia)";
+        }
+        // Menggunakan prompt baru yang lebih cerdas untuk Gemini
+        String prompt = String.format(Locale.getDefault(), getString(R.string.gemini_prompt_template),
+                damageClass, scale, confidence, location);
+
+        Log.d(TAG, "Generated AI Prompt: " + prompt);
+        getGeminiChatResponse(prompt);
+    }
+
+    private void getGeminiChatResponse(String prompt) {
         if (!isAdded()) return;
 
         chatbotCard.setVisibility(View.VISIBLE);
@@ -306,59 +317,61 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
         textChatbotResponse.setText(getString(R.string.chatbot_thinking));
 
         RequestQueue queue = Volley.newRequestQueue(requireContext());
+
         JSONObject requestBody = new JSONObject();
         try {
-            requestBody.put("model", "gpt-3.5-turbo");
-            JSONArray messagesArray = new JSONArray();
-            JSONObject systemMessage = new JSONObject();
-            systemMessage.put("role", "system");
-            systemMessage.put("content", "You are a helpful assistant for a road damage reporting app named Roady.");
-            JSONObject userMessage = new JSONObject();
-            userMessage.put("role", "user");
-            userMessage.put("content", prompt);
-            messagesArray.put(systemMessage);
-            messagesArray.put(userMessage);
-            requestBody.put("messages", messagesArray);
-            requestBody.put("max_tokens", 150);
+            JSONArray contentsArray = new JSONArray();
+            JSONObject content = new JSONObject();
+            JSONArray partsArray = new JSONArray();
+            JSONObject part = new JSONObject();
+            part.put("text", prompt);
+            partsArray.put(part);
+            content.put("parts", partsArray);
+            contentsArray.put(content);
+            requestBody.put("contents", contentsArray);
         } catch (JSONException e) {
-            Log.e(TAG, "Failed to create OpenAI request body", e);
+            Log.e(TAG, "Failed to create Gemini request body", e);
             return;
         }
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, OPENAI_API_URL, requestBody,
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, GEMINI_API_URL, requestBody,
                 response -> {
                     if (!isAdded()) return;
                     chatbotProgressBar.setVisibility(View.GONE);
                     try {
-                        String botResponse = response.getJSONArray("choices").getJSONObject(0)
-                                .getJSONObject("message").getString("content");
+                        String botResponse = response.getJSONArray("candidates")
+                                .getJSONObject(0)
+                                .getJSONObject("content")
+                                .getJSONArray("parts")
+                                .getJSONObject(0)
+                                .getString("text");
                         textChatbotResponse.setText(botResponse.trim());
                     } catch (JSONException e) {
-                        Log.e(TAG, "Failed to parse OpenAI response", e);
+                        Log.e(TAG, "Failed to parse Gemini response", e);
                         textChatbotResponse.setText(getString(R.string.chatbot_error));
                     }
                 },
                 error -> {
                     if (!isAdded()) return;
                     chatbotProgressBar.setVisibility(View.GONE);
-                    Log.e(TAG, "OpenAI API Error", error);
+                    Log.e(TAG, "Gemini API Error", error);
                     if (error.networkResponse != null) {
-                        Log.e(TAG, "OpenAI Error Body: " + new String(error.networkResponse.data, StandardCharsets.UTF_8));
+                        String responseBody = new String(error.networkResponse.data, StandardCharsets.UTF_8);
+                        Log.e(TAG, "Gemini Error Body: " + responseBody);
+                        try {
+                            JSONObject errorJson = new JSONObject(responseBody);
+                            String errorMessage = errorJson.getJSONObject("error").getString("message");
+                            Toast.makeText(requireContext(), "Gemini Error: " + errorMessage, Toast.LENGTH_LONG).show();
+                        } catch (JSONException e) {
+                            textChatbotResponse.setText(getString(R.string.chatbot_error));
+                        }
+                    } else {
+                        textChatbotResponse.setText(getString(R.string.chatbot_error));
                     }
-                    textChatbotResponse.setText(getString(R.string.chatbot_error));
                 }
-        ) {
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Content-Type", "application/json");
-                headers.put("Authorization", "Bearer " + OPENAI_API_KEY);
-                return headers;
-            }
-        };
+        );
         queue.add(jsonObjectRequest);
     }
-
     private void performSearch() {
         String searchString = editTextSearch.getText().toString().trim();
         if (!searchString.isEmpty()) {
@@ -446,16 +459,6 @@ public class DevicesFragment extends Fragment implements OnMapReadyCallback {
         }).start();
     }
 
-    private void generateAndSendOpenAIPrompt(String damageClass, String confidence, String location) {
-        if (!isAdded()) return;
-        if (location.equals(getString(R.string.placeholder_empty)) || location.isEmpty()) {
-            location = "lokasi saat ini (detail tidak tersedia)";
-        }
-        String prompt = String.format(Locale.getDefault(), getString(R.string.openai_prompt_template),
-                damageClass, confidence, location);
-        Log.d(TAG, "Generated OpenAI Prompt: " + prompt);
-        getOpenAIChatResponse(prompt);
-    }
 
     private void clearDamageDetails() {
         if (!isAdded()) return;
